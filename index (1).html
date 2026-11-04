@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>점의 회전 궤적 탐구</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: Arial, "Malgun Gothic", sans-serif;
+      color: #252525;
+      background: #f5f6f8;
+    }
+
+    .container {
+      max-width: 1150px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 27px;
+    }
+
+    .subtitle {
+      margin: 0 0 22px;
+      color: #666;
+      font-size: 15px;
+    }
+
+    .panel {
+      background: white;
+      border-radius: 14px;
+      padding: 22px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+      margin-bottom: 18px;
+    }
+
+    .control-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .slider-area {
+      flex: 1;
+      min-width: 250px;
+    }
+
+    .slider-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+
+    .slider-title strong {
+      color: #ff6634;
+      font-size: 20px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: #ff6634;
+      cursor: pointer;
+    }
+
+    .range-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 5px;
+      color: #777;
+      font-size: 12px;
+    }
+
+    button {
+      border: none;
+      border-radius: 9px;
+      padding: 12px 20px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .primary-btn {
+      color: white;
+      background: #ff6634;
+    }
+
+    .primary-btn:hover:not(:disabled) {
+      background: #e95222;
+    }
+
+    .secondary-btn {
+      color: #333;
+      background: #e9ebef;
+    }
+
+    .secondary-btn:hover:not(:disabled) {
+      background: #dfe2e8;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.9fr);
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 0 0 14px;
+    }
+
+    .scene-wrap {
+      width: 100%;
+      overflow: hidden;
+      border-radius: 10px;
+      background: #fbfcfe;
+      border: 1px solid #e8ebf0;
+    }
+
+    #scene {
+      display: block;
+      width: 100%;
+      touch-action: none;
+      cursor: grab;
+    }
+
+    #scene:active {
+      cursor: grabbing;
+    }
+
+    .top-wrap {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      background: #fbfcfe;
+      border: 1px solid #e8ebf0;
+      border-radius: 10px;
+      padding: 8px;
+    }
+
+    #topView {
+      display: block;
+      width: 100%;
+      max-width: 340px;
+    }
+
+    .value-area {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .value-box {
+      padding: 14px;
+      border-radius: 10px;
+      background: #f6f7f9;
+      text-align: center;
+    }
+
+    .value-label {
+      color: #666;
+      font-size: 13px;
+      margin-bottom: 7px;
+    }
+
+    .value-number {
+      font-size: 23px;
+      font-weight: 800;
+      color: #222;
+    }
+
+    .value-number.highlight {
+      color: #ff6634;
+    }
+
+    .comparison-panel {
+      margin-top: 18px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    th {
+      padding: 12px 8px;
+      background: #f2f3f5;
+      font-weight: 700;
+    }
+
+    td {
+      padding: 11px 8px;
+      border-bottom: 1px solid #eceef1;
+    }
+
+    tr.selected-row {
+      background: #fff0ea;
+      font-weight: 800;
+      color: #e95222;
+    }
+
+    .angle-display {
+      margin-top: 10px;
+      color: #777;
+      font-size: 12px;
+      text-align: right;
+    }
+
+    @media (max-width: 760px) {
+      body {
+        padding: 12px;
+      }
+
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .panel {
+        padding: 16px;
+      }
+
+      .control-row {
+        gap: 14px;
+      }
+
+      .button-area {
+        display: flex;
+        width: 100%;
+      }
+
+      .button-area button {
+        flex: 1;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <h1>점의 회전 궤적 탐구</h1>
+    <p class="subtitle">
+      회전축과 점 사이의 거리를 바꾸며 점이 그리는 원을 관찰해 봅시다.
+    </p>
+
+    <!-- 조작 패널 -->
+    <div class="panel">
+      <div class="control-row">
+
+        <div class="slider-area">
+          <div class="slider-title">
+            <span>회전축과 점 사이의 거리</span>
+            <strong id="distanceLabel">1</strong>
+          </div>
+
+          <input
+            type="range"
+            id="distanceSlider"
+            min="1"
+            max="5"
+            step="1"
+            value="1"
+          >
+
+          <div class="range-labels">
+            <span>1</span>
+            <span>2</span>
+            <span>3</span>
+            <span>4</span>
+            <span>5</span>
+          </div>
+        </div>
+
+        <div class="button-area" style="display:flex; gap:10px;">
+          <button class="primary-btn" id="rotateBtn">
+            한 바퀴 회전
+          </button>
+
+          <button class="secondary-btn" id="resetBtn">
+            초기화
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 관찰 영역 -->
+    <div class="main-grid">
+
+      <!-- 3차원 관찰 -->
+      <div class="panel">
+        <h2 class="section-title">입체적으로 관찰하기</h2>
+
+        <div class="scene-wrap">
+          <svg
+            id="scene"
+            viewBox="0 0 720 450"
+            xmlns="http://www.w3.org/2000/svg"
+          ></svg>
+        </div>
+
+        <div class="angle-display" id="angleDisplay">
+          수평 시점: 270°
+        </div>
+      </div>
+
+      <!-- 위에서 본 모습 -->
+      <div class="panel">
+        <h2 class="section-title">위에서 본 모습</h2>
+
+        <div class="top-wrap">
+          <svg
+            id="topView"
+            viewBox="0 0 320 320"
+            xmlns="http://www.w3.org/2000/svg"
+          ></svg>
+        </div>
+
+        <div class="value-area">
+          <div class="value-box">
+            <div class="value-label">회전축과 점 사이의 거리</div>
+            <div class="value-number" id="radiusValue">1</div>
+          </div>
+
+          <div class="value-box">
+            <div class="value-label">원의 지름</div>
+            <div class="value-number highlight" id="diameterValue">2</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 수치 비교표 -->
+    <div class="panel comparison-panel">
+      <h2 class="section-title">거리와 원의 지름 비교하기</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>회전축과 점 사이의 거리</th>
+            <th>원의 지름</th>
+          </tr>
+        </thead>
+
+        <tbody id="comparisonBody"></tbody>
+      </table>
+    </div>
+
+  </div>
+
+
+  <script>
+    // --------------------------------------------------
+    // 기본 설정
+    // --------------------------------------------------
+
+    const scene = document.getElementById("scene");
+    const topView = document.getElementById("topView");
+
+    const distanceSlider = document.getElementById("distanceSlider");
+    const distanceLabel = document.getElementById("distanceLabel");
+
+    const radiusValue = document.getElementById("radiusValue");
+    const diameterValue = document.getElementById("diameterValue");
+
+    const rotateBtn = document.getElementById("rotateBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    const comparisonBody = document.getElementById("comparisonBody");
+    const angleDisplay = document.getElementById("angleDisplay");
+
+    let distance = 1;
+    let angle = 0;
+
+    let isAnimating = false;
+    let animationFrame = null;
+    let animationStartTime = 0;
+
+    const animationDuration = 2600;
+
+    // 카메라 방향
+    let cameraYaw = -Math.PI / 2;
+    let cameraPolar = 1.05;
+
+    const cameraDistance = 900;
+
+    const centerX = 360;
+    const centerY = 225;
+
+    // 화면상 거리 배율
+    const visualScale = 22;
+
+
+    // --------------------------------------------------
+    // 벡터 계산
+    // --------------------------------------------------
+
+    function normalize(v) {
+      const length = Math.sqrt(
+        v[0] * v[0] +
+        v[1] * v[1] +
+        v[2] * v[2]
+      );
+
+      if (length === 0) {
+        return [0, 0, 0];
+      }
+
+      return [
+        v[0] / length,
+        v[1] / length,
+        v[2] / length
+      ];
+    }
+
+    function dot(a, b) {
+      return (
+        a[0] * b[0] +
+        a[1] * b[1] +
+        a[2] * b[2]
+      );
+    }
+
+    function cross(a, b) {
+      return [
+        a[1] * b[2] - a[2] * b[1],
+        a[2] * b[0] - a[0] * b[2],
+        a[0] * b[1] - a[1] * b[0]
+      ];
+    }
+
+
+    // --------------------------------------------------
+    // 카메라 및 투영
+    // --------------------------------------------------
+
+    function getCameraBasis() {
+      const sinPolar = Math.sin(cameraPolar);
+      const cosPolar = Math.cos(cameraPolar);
+
+      const cameraPosition = [
+        cameraDistance * sinPolar * Math.cos(cameraYaw),
+        cameraDistance * sinPolar * Math.sin(cameraYaw),
+        cameraDistance * cosPolar
+      ];
+
+      const forward = normalize([
+        -cameraPosition[0],
+        -cameraPosition[1],
+        -cameraPosition[2]
+      ]);
+
+      const worldUp = [0, 0, 1];
+
+      const right = normalize(
+        cross(forward, worldUp)
+      );
+
+      const up = normalize(
+        cross(right, forward)
+      );
+
+      return { right, up };
+    }
+
+    function project(point) {
+      const basis = getCameraBasis();
+
+      const x = dot(point, basis.right);
+      const y = dot(point, basis.up);
+
+      return {
+        x: centerX + x,
+        y: centerY - y
+      };
+    }
+
+
+    // --------------------------------------------------
+    // 3차원 원 경로 생성
+    // --------------------------------------------------
+
+    function makeCirclePath(radius, startAngle, endAngle, z = 0) {
+      const steps = Math.max(
+        20,
+        Math.ceil(Math.abs(endAngle - startAngle) * 45)
+      );
+
+      let path = "";
+
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+
+        const currentAngle =
+          startAngle + (endAngle - startAngle) * t;
+
+        const point = [
+          radius * Math.cos(currentAngle),
+          radius * Math.sin(currentAngle),
+          z
+        ];
+
+        const p = project(point);
+
+        path += (i === 0 ? "M" : "L") +
+          p.x.toFixed(2) + "," +
+          p.y.toFixed(2) + " ";
+      }
+
+      return path;
+    }
+
+
+    // --------------------------------------------------
+    // 3차원 장면 그리기
+    // --------------------------------------------------
+
+    function renderScene() {
+      const radius = distance * visualScale;
+
+      const axisTop = project([0, 0, 145]);
+      const axisBottom = project([0, 0, -145]);
+      const axisCenter = project([0, 0, 0]);
+
+      // 회전하는 점
+      const point = [
+        radius * Math.cos(angle),
+        radius * Math.sin(angle),
+        0
+      ];
+
+      const pointScreen = project(point);
+
+      // 회전 평면
+      const planePath = makeCirclePath(
+        radius,
+        0,
+        Math.PI * 2
+      ) + "Z";
+
+      // 전체 원
+      const fullCirclePath = makeCirclePath(
+        radius,
+        0,
+        Math.PI * 2
+      );
+
+      // 점이 지나간 궤적
+      let tracePath = "";
+
+      if (angle > 0.001) {
+        tracePath = makeCirclePath(
+          radius,
+          0,
+          Math.min(angle, Math.PI * 2)
+        );
+      }
+
+      const axis = `
+        <line
+          x1="${axisBottom.x}"
+          y1="${axisBottom.y}"
+          x2="${axisTop.x}"
+          y2="${axisTop.y}"
+          stroke="#444"
+          stroke-width="3"
+          stroke-linecap="round"
+        />
+
+        <circle
+          cx="${axisCenter.x}"
+          cy="${axisCenter.y}"
+          r="5"
+          fill="#444"
+        />
+      `;
+
+      const plane = `
+        <path
+          d="${planePath}"
+          fill="#ff6634"
+          fill-opacity="0.08"
+          stroke="none"
+        />
+      `;
+
+      const circle = `
+        <path
+          d="${fullCirclePath}"
+          fill="none"
+          stroke="#bfc5ce"
+          stroke-width="1.8"
+          stroke-dasharray="5 5"
+        />
+      `;
+
+      const trace = tracePath
+        ? `
+          <path
+            d="${tracePath}"
+            fill="none"
+            stroke="#ff6634"
+            stroke-width="5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        `
+        : "";
+
+      const radiusLine = `
+        <line
+          x1="${axisCenter.x}"
+          y1="${axisCenter.y}"
+          x2="${pointScreen.x}"
+          y2="${pointScreen.y}"
+          stroke="#ff6634"
+          stroke-width="2"
+          stroke-dasharray="5 4"
+        />
+      `;
+
+      const rotatingPoint = `
+        <circle
+          cx="${pointScreen.x}"
+          cy="${pointScreen.y}"
+          r="9"
+          fill="#ff6634"
+          stroke="white"
+          stroke-width="2.5"
+        />
+      `;
+
+      const labels = `
+        <text
+          x="${axisTop.x + 12}"
+          y="${axisTop.y - 8}"
+          font-size="15"
+          font-weight="bold"
+          fill="#444"
+        >회전축</text>
+
+        <text
+          x="${pointScreen.x + 13}"
+          y="${pointScreen.y - 12}"
+          font-size="15"
+          font-weight="bold"
+          fill="#ff6634"
+        >점</text>
+      `;
+
+      scene.innerHTML = `
+        <rect
+          x="0"
+          y="0"
+          width="720"
+          height="450"
+          fill="#fbfcfe"
+        />
+
+        ${plane}
+        ${circle}
+        ${axis}
+        ${radiusLine}
+        ${trace}
+        ${rotatingPoint}
+        ${labels}
+      `;
+
+      updateAngleDisplay();
+    }
+
+
+    // --------------------------------------------------
+    // 위에서 본 원의 궤적 생성
+    // --------------------------------------------------
+
+    function makeTopArcPath(cx, cy, radius, startAngle, endAngle) {
+      if (endAngle <= 0.001) {
+        return "";
+      }
+
+      const steps = Math.max(
+        2,
+        Math.ceil((endAngle - startAngle) * 45)
+      );
+
+      let path = "";
+
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+
+        const currentAngle =
+          startAngle + (endAngle - startAngle) * t;
+
+        const x = cx + radius * Math.cos(currentAngle);
+        const y = cy - radius * Math.sin(currentAngle);
+
+        path += (i === 0 ? "M" : "L") +
+          x.toFixed(2) + "," +
+          y.toFixed(2) + " ";
+      }
+
+      return path;
+    }
+
+
+    // --------------------------------------------------
+    // 위에서 본 화면 그리기
+    // --------------------------------------------------
+
+    function renderTopView() {
+      const cx = 160;
+      const cy = 142;
+      const radius = distance * visualScale;
+
+      // 현재 각도에 따른 점의 위치
+      const pointX = cx + radius * Math.cos(angle);
+      const pointY = cy - radius * Math.sin(angle);
+
+      // 현재까지 지나간 궤적
+      const tracePath = makeTopArcPath(
+        cx,
+        cy,
+        radius,
+        0,
+        Math.min(angle, Math.PI * 2)
+      );
+
+      const trace = tracePath
+        ? `
+          <path
+            d="${tracePath}"
+            fill="none"
+            stroke="#ff6634"
+            stroke-width="5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        `
+        : "";
+
+      topView.innerHTML = `
+        <rect
+          x="0"
+          y="0"
+          width="320"
+          height="320"
+          fill="#fbfcfe"
+        />
+
+        <!-- 기준선 -->
+        <line
+          x1="${cx - 125}"
+          y1="${cy}"
+          x2="${cx + 125}"
+          y2="${cy}"
+          stroke="#d7dbe1"
+          stroke-width="1"
+          stroke-dasharray="4 4"
+        />
+
+        <line
+          x1="${cx}"
+          y1="${cy - 125}"
+          x2="${cx}"
+          y2="${cy + 125}"
+          stroke="#d7dbe1"
+          stroke-width="1"
+          stroke-dasharray="4 4"
+        />
+
+        <!-- 점이 그리는 원 -->
+        <circle
+          cx="${cx}"
+          cy="${cy}"
+          r="${radius}"
+          fill="#ff6634"
+          fill-opacity="0.05"
+          stroke="#bfc5ce"
+          stroke-width="1.8"
+          stroke-dasharray="5 5"
+        />
+
+        <!-- 회전축 -->
+        <circle
+          cx="${cx}"
+          cy="${cy}"
+          r="5"
+          fill="#444"
+        />
+
+        <!-- 지름 -->
+        <line
+          x1="${cx - radius}"
+          y1="${cy}"
+          x2="${cx + radius}"
+          y2="${cy}"
+          stroke="#333"
+          stroke-width="2"
+        />
+
+        <!-- 회전한 궤적 -->
+        ${trace}
+
+        <!-- 회전축에서 점까지의 선분 -->
+        <line
+          x1="${cx}"
+          y1="${cy}"
+          x2="${pointX}"
+          y2="${pointY}"
+          stroke="#ff6634"
+          stroke-width="2"
+          stroke-dasharray="5 4"
+        />
+
+        <!-- 회전하는 점 -->
+        <circle
+          cx="${pointX}"
+          cy="${pointY}"
+          r="7"
+          fill="#ff6634"
+          stroke="white"
+          stroke-width="2"
+        />
+
+        <!-- 회전축 이름 -->
+        <text
+          x="${cx + 9}"
+          y="${cy - 12}"
+          font-size="12"
+          fill="#444"
+        >회전축</text>
+
+        <!-- 지름 수치 -->
+        <text
+          x="${cx}"
+          y="${cy + radius + 27}"
+          text-anchor="middle"
+          font-size="15"
+          font-weight="bold"
+          fill="#333"
+        >지름 ${distance * 2}</text>
+      `;
+    }
+
+
+    // --------------------------------------------------
+    // 수치 및 비교표 업데이트
+    // --------------------------------------------------
+
+    function updateValues() {
+      const diameter = distance * 2;
+
+      distanceLabel.textContent = distance;
+      radiusValue.textContent = distance;
+      diameterValue.textContent = diameter;
+
+      comparisonBody.innerHTML = "";
+
+      for (let r = 1; r <= 5; r++) {
+        const d = r * 2;
+
+        const tr = document.createElement("tr");
+
+        if (r === distance) {
+          tr.classList.add("selected-row");
+        }
+
+        tr.innerHTML = `
+          <td>${r}</td>
+          <td>${d}</td>
+        `;
+
+        comparisonBody.appendChild(tr);
+      }
+    }
+
+
+    // --------------------------------------------------
+    // 시점 각도 표시
+    // --------------------------------------------------
+
+    function updateAngleDisplay() {
+      let degrees = cameraYaw * 180 / Math.PI;
+
+      degrees = ((degrees % 360) + 360) % 360;
+
+      angleDisplay.textContent =
+        `수평 시점: ${Math.round(degrees)}°`;
+    }
+
+
+    // --------------------------------------------------
+    // 전체 화면 업데이트
+    // --------------------------------------------------
+
+    function renderAll() {
+      renderScene();
+      renderTopView();
+      updateValues();
+    }
+
+
+    // --------------------------------------------------
+    // 거리 변경
+    // --------------------------------------------------
+
+    distanceSlider.addEventListener("input", function () {
+      if (isAnimating) return;
+
+      distance = Number(this.value);
+      angle = 0;
+
+      renderAll();
+    });
+
+
+    // --------------------------------------------------
+    // 한 바퀴 회전 애니메이션
+    // --------------------------------------------------
+
+    function animate(timestamp) {
+      if (!isAnimating) return;
+
+      if (!animationStartTime) {
+        animationStartTime = timestamp;
+      }
+
+      const elapsed = timestamp - animationStartTime;
+
+      const progress = Math.min(
+        elapsed / animationDuration,
+        1
+      );
+
+      angle = Math.PI * 2 * progress;
+
+      // 두 화면을 같은 각도로 동시에 업데이트
+      renderScene();
+      renderTopView();
+
+      if (progress < 1) {
+        animationFrame = requestAnimationFrame(animate);
+      } else {
+        angle = Math.PI * 2;
+
+        isAnimating = false;
+        animationFrame = null;
+
+        rotateBtn.disabled = false;
+        distanceSlider.disabled = false;
+
+        renderAll();
+      }
+    }
+
+    rotateBtn.addEventListener("click", function () {
+      if (isAnimating) return;
+
+      angle = 0;
+      isAnimating = true;
+      animationStartTime = 0;
+
+      rotateBtn.disabled = true;
+      distanceSlider.disabled = true;
+
+      renderAll();
+
+      animationFrame = requestAnimationFrame(animate);
+    });
+
+
+    // --------------------------------------------------
+    // 초기화
+    // --------------------------------------------------
+
+    function reset() {
+      if (animationFrame !== null) {
+        cancelAnimationFrame(animationFrame);
+      }
+
+      isAnimating = false;
+      animationFrame = null;
+      animationStartTime = 0;
+
+      angle = 0;
+
+      rotateBtn.disabled = false;
+      distanceSlider.disabled = false;
+
+      renderAll();
+    }
+
+    resetBtn.addEventListener("click", reset);
+
+
+    // --------------------------------------------------
+    // 마우스 / 터치로 시점 조작
+    // --------------------------------------------------
+
+    let isDragging = false;
+    let lastPointerX = 0;
+    let lastPointerY = 0;
+
+    scene.addEventListener("pointerdown", function (event) {
+      isDragging = true;
+
+      lastPointerX = event.clientX;
+      lastPointerY = event.clientY;
+
+      scene.setPointerCapture(event.pointerId);
+    });
+
+    scene.addEventListener("pointermove", function (event) {
+      if (!isDragging) return;
+
+      const dx = event.clientX - lastPointerX;
+      const dy = event.clientY - lastPointerY;
+
+      lastPointerX = event.clientX;
+      lastPointerY = event.clientY;
+
+      // 수평 방향 360도 회전 가능
+      cameraYaw -= dx * 0.008;
+
+      // 위아래 방향으로도 시점 변경
+      cameraPolar += dy * 0.008;
+
+      cameraPolar = Math.max(
+        0.08,
+        Math.min(Math.PI - 0.08, cameraPolar)
+      );
+
+      renderScene();
+    });
+
+    function stopDragging() {
+      isDragging = false;
+    }
+
+    scene.addEventListener("pointerup", stopDragging);
+    scene.addEventListener("pointercancel", stopDragging);
+    scene.addEventListener("lostpointercapture", stopDragging);
+
+
+    // --------------------------------------------------
+    // 최초 실행
+    // --------------------------------------------------
+
+    renderAll();
+
+  </script>
+</body>
+</html>
